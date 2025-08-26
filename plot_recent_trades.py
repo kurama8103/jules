@@ -20,27 +20,49 @@ def fetch_recent_trades(product_code="BTC_JPY", count=500):
         print(f"Error fetching trades for {product_code}: {e}")
         return None
 
-def plot_trades(trades_df, output_filename="recent_trades.png"):
+def fetch_funding_rate(product_code="FX_BTC_JPY"):
     """
-    Plots the trade data and saves it to a file.
+    Gets the funding rate for a given product code from bitflyer.
     """
-    if trades_df.empty:
-        print("Trade data is empty, skipping plot.")
+    url = f"https://api.bitflyer.com/v1/getfundingrate?product_code={product_code}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching funding rate for {product_code}: {e}")
+        return None
+
+def plot_trades(spot_df=None, futures_df=None, funding_rate=None, output_filename="recent_trades.png"):
+    """
+    Plots the trade data for spot and futures and saves it to a file.
+    Displays the funding rate in the title.
+    """
+    if (spot_df is None or spot_df.empty) and (futures_df is None or futures_df.empty):
+        print("All trade data is empty, skipping plot.")
         return
 
     print(f"Generating plot and saving to {output_filename}...")
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(15, 7))
 
-    ax.plot(trades_df['exec_date'], trades_df['price'], marker='.', linestyle='-', markersize=4)
+    # Plotting
+    if spot_df is not None and not spot_df.empty:
+        ax.plot(spot_df['exec_date'], spot_df['price'], marker='.', linestyle='-', markersize=4, label='Spot (BTC/JPY)')
+    if futures_df is not None and not futures_df.empty:
+        ax.plot(futures_df['exec_date'], futures_df['price'], marker='.', linestyle='-', markersize=4, label='Futures (FX_BTC_JPY)')
 
     # Formatting the plot
-    ax.set_title('Recent BTC/JPY Trades on bitflyer')
+    title = 'Recent Trades on bitflyer'
+    if funding_rate is not None:
+        title += f' | Current Funding Rate: {funding_rate:.8f}'
+    ax.set_title(title)
     ax.set_xlabel('Time')
     ax.set_ylabel('Price (JPY)')
     ax.grid(True)
+    ax.legend()
 
     # Improve date formatting on x-axis
-    fig.autofmt_xdate() # Auto-rotates dates to fit
+    fig.autofmt_xdate()
     formatter = mdates.DateFormatter('%H:%M:%S')
     ax.xaxis.set_major_formatter(formatter)
 
@@ -55,27 +77,38 @@ def main():
     """
     Main function to fetch and plot recent trades.
     """
-    print("Fetching recent trades for BTC_JPY...")
-    trades = fetch_recent_trades()
+    print("Fetching data from bitflyer API...")
+    spot_trades = fetch_recent_trades(product_code="BTC_JPY")
+    futures_trades = fetch_recent_trades(product_code="FX_BTC_JPY")
+    funding_rate_data = fetch_funding_rate()
 
-    if trades:
-        # Create a pandas DataFrame
+    # --- Process Data ---
+    def process_trades(trades, name):
+        if not trades:
+            print(f"Could not fetch {name} trades.")
+            return None
         df = pd.DataFrame(trades)
-
-        # Convert exec_date to datetime objects
-        # Using format='ISO8601' handles timestamps with and without fractional seconds.
         df['exec_date'] = pd.to_datetime(df['exec_date'], format='ISO8601')
-
-        # Sort by date just in case the API doesn't guarantee order
         df = df.sort_values(by='exec_date')
+        print(f"Successfully processed {len(df)} {name} trades.")
+        return df
 
-        print(f"Successfully fetched and processed {len(df)} trades.")
+    spot_df = process_trades(spot_trades, "Spot (BTC_JPY)")
+    futures_df = process_trades(futures_trades, "Futures (FX_BTC_JPY)")
 
-        # Pass the DataFrame to the plotting function
-        plot_trades(df)
-
+    funding_rate = None
+    if funding_rate_data and 'current_funding_rate' in funding_rate_data:
+        funding_rate = funding_rate_data['current_funding_rate']
+        print(f"Current funding rate: {funding_rate}")
     else:
-        print("Could not fetch trades. Exiting.")
+        print("Could not fetch funding rate.")
+
+    # --- Plot Data ---
+    if spot_df is not None or futures_df is not None:
+        # Pass the DataFrames to the plotting function
+        plot_trades(spot_df, futures_df, funding_rate)
+    else:
+        print("No trade data available to plot. Exiting.")
 
     print("Script finished.")
 
