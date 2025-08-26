@@ -79,23 +79,25 @@ def save_trades(trades: list[dict], product_code: str):
 
 def load_all_trades_as_df(product_code: str) -> pd.DataFrame:
     """
-    Loads all trades for a given product code from the database into a DataFrame.
-
-    :param product_code: The product code (e.g., 'BTC_JPY').
-    :return: A pandas DataFrame with all trades for that product.
+    Loads all trades for a given product code from the database into a DataFrame
+    with a UTC-localized DatetimeIndex.
     """
     conn = get_db_connection()
 
     df = pd.read_sql_query(
         "SELECT exec_date, price FROM trades WHERE product_code = ? ORDER BY exec_date ASC",
         conn,
-        params=(product_code,)
+        params=(product_code,),
+        parse_dates=['exec_date'] # Ask pandas to parse the date column
     )
 
     conn.close()
 
-    # Convert exec_date to datetime objects after loading
-    if not df.empty:
-        df['exec_date'] = pd.to_datetime(df['exec_date'], format='ISO8601')
+    if df.empty:
+        return df
+
+    # Set index and localize to UTC
+    df = df.set_index('exec_date')
+    df.index = df.index.tz_localize('UTC')
 
     return df

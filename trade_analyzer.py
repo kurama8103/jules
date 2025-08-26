@@ -57,9 +57,9 @@ def calculate_spread(spot_df: pd.DataFrame, futures_df: pd.DataFrame, interval='
     if spot_df.empty or futures_df.empty:
         return pd.DataFrame()
 
-    # Set exec_date as index for resampling
-    spot_df = spot_df.set_index('exec_date')
-    futures_df = futures_df.set_index('exec_date')
+    # Convert UTC index to Tokyo time
+    spot_df.index = spot_df.index.tz_convert('Asia/Tokyo')
+    futures_df.index = futures_df.index.tz_convert('Asia/Tokyo')
 
     # Resample to the given interval, taking the last price and forward-filling
     spot_resampled = spot_df['price'].resample(interval).last().ffill()
@@ -82,47 +82,45 @@ def calculate_spread(spot_df: pd.DataFrame, futures_df: pd.DataFrame, interval='
 
 def plot_trades(processed_df: pd.DataFrame, funding_rate: float | None = None, output_filename="trade_analyzer.png"):
     """
-    Plots the processed trade data (spot, futures, spread) and saves it to a file.
-    Uses a secondary y-axis for the spread percentage.
+    Plots prices and spread in two vertically stacked subplots.
     """
     if processed_df.empty:
         print("Processed data is empty, skipping plot.")
         return
 
-    print(f"Generating plot and saving to {output_filename}...")
-    fig, ax1 = plt.subplots(figsize=(18, 9))
+    print(f"Generating stacked plot and saving to {output_filename}...")
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1,
+        sharex=True,
+        figsize=(18, 10),
+        gridspec_kw={'height_ratios': [3, 1]}
+    )
 
-    # --- Primary Y-axis (Price) ---
-    color1 = 'tab:blue'
-    ax1.set_xlabel('Time')
-    ax1.set_ylabel('Price (JPY)', color=color1)
-    ax1.plot(processed_df.index, processed_df['spot_price'], color=color1, label='Spot Price')
+    # --- Top Plot (Prices) ---
+    ax1.plot(processed_df.index, processed_df['spot_price'], color='tab:blue', label='Spot Price')
+    ax1.plot(processed_df.index, processed_df['futures_price'], color='tab:cyan', linestyle='--', label='Futures Price')
+    ax1.set_ylabel('Price (JPY)')
+    ax1.legend()
+    ax1.grid(True)
 
-    color2 = 'tab:cyan'
-    ax1.plot(processed_df.index, processed_df['futures_price'], color=color2, linestyle='--', label='Futures Price')
-    ax1.tick_params(axis='y', labelcolor=color1)
+    # --- Bottom Plot (Spread) ---
+    ax2.plot(processed_df.index, processed_df['spread_pct'], color='tab:red', label='Spread %')
+    ax2.axhline(0, color='tab:red', linestyle='--', linewidth=0.8)
+    ax2.set_ylabel('Spread (%)')
+    ax2.set_xlabel('Time (JST)')
+    ax2.grid(True)
 
-    # --- Secondary Y-axis (Spread) ---
-    ax2 = ax1.twinx()
-    color3 = 'tab:red'
-    ax2.set_ylabel('Spread (%)', color=color3)
-    ax2.plot(processed_df.index, processed_df['spread_pct'], color=color3, linestyle=':', label='Spread %')
-    ax2.tick_params(axis='y', labelcolor=color3)
-    ax2.axhline(0, color=color3, linestyle='--', linewidth=0.8) # Add a zero line for reference
-
-    # --- General Formatting ---
+    # --- Figure-level Formatting ---
     title = 'bitflyer Spot vs. Futures Analysis'
     if funding_rate is not None:
-        title += f' | Current Funding Rate: {funding_rate:.8f}'
-    plt.title(title)
+        title += f'\nCurrent Funding Rate: {funding_rate:.8f}'
+    fig.suptitle(title, fontsize=16)
 
-    fig.tight_layout() # Adjust plot to prevent labels from overlapping
-    fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
+    fig.tight_layout(rect=[0, 0.03, 1, 0.97]) # Adjust layout to make room for suptitle
 
-    # Improve date formatting on x-axis
-    fig.autofmt_xdate()
-    formatter = mdates.DateFormatter('%H:%M:%S')
-    ax1.xaxis.set_major_formatter(formatter)
+    # Date formatting for the shared x-axis
+    formatter = mdates.DateFormatter('%H:%M:%S', tz='Asia/Tokyo')
+    ax2.xaxis.set_major_formatter(formatter)
 
     try:
         plt.savefig(output_filename)
