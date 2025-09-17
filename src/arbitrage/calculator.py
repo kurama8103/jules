@@ -1,10 +1,11 @@
+import config
+
 def calculate_arbitrage(gmo_ticker: dict, bitbank_ticker: dict):
     """
-    GMOコインとbitbankのティッカー情報から裁定機会を計算します。
+    GMOコインとbitbankのティッカー情報から手数料を考慮した裁定機会を計算します。
 
     Args:
         gmo_ticker (list): GMOコインのAPIから取得したティッカー情報のリスト。
-                           list of dicts, so we take the first element.
         bitbank_ticker (dict): bitbankのAPIから取得したティッカー情報。
 
     Returns:
@@ -15,45 +16,53 @@ def calculate_arbitrage(gmo_ticker: dict, bitbank_ticker: dict):
     if not gmo_ticker or not bitbank_ticker:
         return opportunities
 
-    # GMOのティッカーはリストで返ってくるため、最初の要素を取得
     gmo_ticker_data = gmo_ticker[0]
 
     # --- Case 1: Buy on GMO Coin, Sell on bitbank ---
-    # GMOで買い（ask）、bitbankで売り（buy）
     try:
-        gmo_ask = float(gmo_ticker_data['ask'])
-        bitbank_buy = float(bitbank_ticker['buy'])
+        buy_price = float(gmo_ticker_data['ask'])
+        sell_price = float(bitbank_ticker['buy'])
 
-        if gmo_ask < bitbank_buy:
-            profit = bitbank_buy - gmo_ask
-            profit_rate = (profit / gmo_ask)
+        # 手数料計算
+        buy_fee = buy_price * config.GMO_COIN_FEE_RATE
+        sell_fee = sell_price * config.BITBANK_FEE_RATE
+
+        # 純利益
+        net_profit = sell_price - buy_price - buy_fee - sell_fee
+
+        if net_profit > 0:
+            profit_rate = net_profit / buy_price
             opportunities.append({
                 'buy_exchange': 'GMO Coin',
                 'sell_exchange': 'bitbank',
-                'buy_price': gmo_ask,
-                'sell_price': bitbank_buy,
-                'profit': profit,
+                'buy_price': buy_price,
+                'sell_price': sell_price,
+                'profit': net_profit,
                 'profit_rate': profit_rate
             })
     except (ValueError, KeyError) as e:
         print(f"Could not parse ticker data for Case 1: {e}")
 
-
     # --- Case 2: Buy on bitbank, Sell on GMO Coin ---
-    # bitbankで買い（sell）、GMOで売り（bid）
     try:
-        bitbank_sell = float(bitbank_ticker['sell'])
-        gmo_bid = float(gmo_ticker_data['bid'])
+        buy_price = float(bitbank_ticker['sell'])
+        sell_price = float(gmo_ticker_data['bid'])
 
-        if bitbank_sell < gmo_bid:
-            profit = gmo_bid - bitbank_sell
-            profit_rate = (profit / bitbank_sell)
+        # 手数料計算
+        buy_fee = buy_price * config.BITBANK_FEE_RATE
+        sell_fee = sell_price * config.GMO_COIN_FEE_RATE
+
+        # 純利益
+        net_profit = sell_price - buy_price - buy_fee - sell_fee
+
+        if net_profit > 0:
+            profit_rate = net_profit / buy_price
             opportunities.append({
                 'buy_exchange': 'bitbank',
                 'sell_exchange': 'GMO Coin',
-                'buy_price': bitbank_sell,
-                'sell_price': gmo_bid,
-                'profit': profit,
+                'buy_price': buy_price,
+                'sell_price': sell_price,
+                'profit': net_profit,
                 'profit_rate': profit_rate
             })
     except (ValueError, KeyError) as e:

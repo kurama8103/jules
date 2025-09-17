@@ -14,3 +14,8 @@ BITBANK_API_SECRET = "YOUR_BITBANK_API_SECRET"
 TARGET_SYMBOL = "BTC_JPY"  # Example symbol
 MIN_PROFIT_RATE = 0.001  # Minimum profit rate to trigger a trade (0.1%)
 MAX_TRADE_AMOUNT = 0.01  # Maximum amount of BTC to trade
+
+# --- Fee Rates (Taker Fees) ---
+# These are example values. Please check the latest fees on the exchanges' websites.
+GMO_COIN_FEE_RATE = 0.0005  # 0.05%
+BITBANK_FEE_RATE = 0.0012   # 0.12%
