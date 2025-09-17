@@ -1,7 +1,8 @@
-# config.py
+# config.py.example
+# Rename this file to config.py and fill in your details.
 
 # --- API Keys and Secrets ---
-# IMPORTANT: Do not commit this file with your actual API keys and secrets.
+# IMPORTANT: Do not commit config.py with your actual API keys and secrets.
 # Use environment variables or a secure vault in a production environment.
 
 GMO_COIN_API_KEY = "YOUR_GMO_COIN_API_KEY"
@@ -11,7 +12,8 @@ BITBANK_API_KEY = "YOUR_BITBANK_API_KEY"
 BITBANK_API_SECRET = "YOUR_BITBANK_API_SECRET"
 
 # --- Trading Parameters ---
-TARGET_SYMBOL = "BTC_JPY"  # Example symbol
+FETCH_INTERVAL_SECONDS = 60  # API access interval in seconds
+TARGET_SYMBOLS = ["BTC_JPY", "ETH_JPY"]  # List of symbols to monitor
 MIN_PROFIT_RATE = 0.001  # Minimum profit rate to trigger a trade (0.1%)
 MAX_TRADE_AMOUNT = 0.01  # Maximum amount of BTC to trade
 

@@ -1,6 +1,6 @@
 import config
 
-def calculate_arbitrage(gmo_ticker: dict, bitbank_ticker: dict):
+def calculate_arbitrage(gmo_ticker: list, bitbank_ticker: dict):
     """
     GMOコインとbitbankのティッカー情報から手数料を考慮した裁定機会を計算します。
 
