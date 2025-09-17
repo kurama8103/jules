@@ -19,8 +19,8 @@ This document logs the instructions given to the AI agent and the development pr
 ## Phase 2: Adding Core Features
 
 **Instruction:**
-> 手数料を高炉
-> (A typo for "手数料を考慮" - "Consider the fees.")
+> 手数料を考慮
+> (Note: The original instruction was "手数料を高炉", which was interpreted as a typo for "Consider the fees.")
 
 **Actions Taken:**
 1.  **Fee Research:** Investigated and confirmed the Taker fees for both exchanges.
