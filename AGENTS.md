@@ -1,67 +1,32 @@
-# Agent Development Log & Instructions
+# Rules for AI Agent Development
 
-This document logs the instructions given to the AI agent and the development process of the crypto arbitrage bot.
+This document outlines the rules and best practices for AI agents working on this project.
 
-## Phase 1: Initial Bot Creation
+## 1. General Principles
 
-**Instruction:**
-> gmoコインとbitbankにおいて、仮想通貨裁定取引を行うbotの作成。データ取得、計算などは分離し、単独で実行可能にする。拡張性を考慮し、サブフォルダを活用する。
-> (Create a bot for cryptocurrency arbitrage between GMO Coin and bitbank. Separate data acquisition, calculation, etc., to be executable independently. Consider extensibility and utilize subfolders.)
+*   **Understand First:** Before writing any code, thoroughly understand the user's request. If a request is ambiguous, ask for clarification.
+*   **Plan Your Work:** Always create a clear, step-by-step plan before making changes. Use the `set_plan` tool.
+*   **Verify Everything:** After every file modification, test, or command execution, verify the outcome. Use tools like `read_file`, `ls`, or run tests to confirm your changes were successful. Do not assume a command worked.
 
-**Actions Taken:**
-1.  **Project Scaffolding:** Created a modular structure with `src` containing subdirectories for `gmo_coin`, `bitbank`, and `arbitrage`.
-2.  **API Clients:** Implemented basic API clients in `src/gmo_coin/api_client.py` and `src/bitbank/api_client.py` to fetch ticker data.
-3.  **Calculator:** Implemented a simple arbitrage calculator in `src/arbitrage/calculator.py`.
-4.  **Configuration:** Created `config.py` for settings.
-5.  **Main Entrypoint:** Created `main.py` to orchestrate the bot's operations.
-6.  **Dependencies:** Created `requirements.txt`.
+## 2. Coding Style & Structure
 
-## Phase 2: Adding Core Features
+*   **Follow Existing Conventions:** Observe the existing code style and structure. Keep the code clean and readable.
+*   **Modularity:** The project is designed to be modular. Keep concerns separated. For example, API logic should stay within the `api_client` modules, and calculation logic within the `calculator`.
+*   **Write Clear Comments:** Add comments to explain complex logic or non-obvious parts of the code. The docstrings should clearly explain the purpose, arguments, and return values of functions.
 
-**Instruction:**
-> 手数料を考慮
-> (Note: The original instruction was "手数料を高炉", which was interpreted as a typo for "Consider the fees.")
+## 3. Testing
 
-**Actions Taken:**
-1.  **Fee Research:** Investigated and confirmed the Taker fees for both exchanges.
-2.  **Config Update:** Added `GMO_COIN_FEE_RATE` and `BITBANK_FEE_RATE` to `config.py`.
-3.  **Logic Update:** Modified `calculator.py` to subtract transaction fees when calculating net profit.
+*   **Always Test:** Any new feature or bug fix must be tested. This can be through automated tests or a clear manual verification process that you execute yourself.
+*   **Run Existing Tests:** If test suites exist, run them to ensure your changes have not introduced any regressions.
+*   **Test Before Submitting:** Do not submit code that has not been verified to work as intended.
 
-## Phase 3: Project Usability & Enhancements
+## 4. Dependencies
 
-**Instruction:**
-> add, readme.md, add girignore, add TARGET_SYMBOLs
-> (Add readme.md, add .gitignore, add TARGET_SYMBOLs)
+*   **Minimize Dependencies:** Avoid adding new external dependencies unless necessary.
+*   **Update `requirements.txt`:** If a new dependency is required, add it to `requirements.txt`.
 
-**Actions Taken:**
-1.  **`.gitignore`:** Created a `.gitignore` file to exclude `config.py` and Python cache files.
-2.  **`README.md`:** Created a comprehensive `README.md` with project description, setup, and usage instructions.
-3.  **Multi-Symbol Support:**
-    *   Updated `config.py` (and created `config.py.example`) to use a list `TARGET_SYMBOLS`.
-    *   Modified `main.py` to loop through the list of symbols.
+## 5. Commits and Submissions
 
-## Phase 4: Performance and Data Logging
-
-**Instruction:**
-> apiアクセスの抑制、api取得データの保存
-> (Suppress API access, save fetched API data.)
-
-**Clarification Provided by User:**
-> APIアクセスの頻度 1min, データ保存 全ての価格データ, csv
-> (API access frequency: 1 min, Data to save: All price data, Format: CSV)
-
-**Actions Taken:**
-1.  **Rate Limiting:** Added `FETCH_INTERVAL_SECONDS` to `config.py` and used it in the `main.py` loop's `time.sleep()`.
-2.  **Data Logger:**
-    *   Created a new module `src/data_logger/logger.py`.
-    *   Implemented a function to log all fetched ticker data for all symbols to a `price_log.csv` file.
-    *   Integrated the logger call into `main.py`.
-
-## Phase 5: Final Documentation (This step)
-
-**Instruction:**
-> AIへの指示を再利用できるようにまとめたものをreadme.mdかrulesとして作成
-> (Create a summary of instructions for the AI so they can be reused, and put it in readme.md or a rules file.)
-
-**Actions Taken:**
-*   Created this `AGENT_LOG.md` file to document the development history.
+*   **Clear Commit Messages:** Write clear and descriptive commit messages. The subject line should be a concise summary (e.g., "feat: Add multi-symbol support"), and the body should explain the 'what' and 'why' of the change.
+*   **Code Review:** Always request a code review before submitting your final work.
+*   **Pull Request Process:** All changes should be submitted as a pull request to the default branch. The final merge is handled by the user.
