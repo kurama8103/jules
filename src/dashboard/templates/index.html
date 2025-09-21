@@ -14,24 +14,33 @@
 <body>
     <h1>Arbitrage Bot Dashboard</h1>
 
+    <form method="get" action="/">
+        <label for="symbol">Select Symbol:</label>
+        <select name="symbol" id="symbol" onchange="this.form.submit()">
+            {% for symbol in all_symbols %}
+                <option value="{{ symbol }}" {% if symbol == selected_symbol %}selected{% endif %}>
+                    {{ symbol }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
     {% if log_data %}
-        <h2>Price Chart (Sell Prices)</h2>
+        <h2>Price Chart for {{ selected_symbol }} (Sell Prices)</h2>
         <div class="chart-container">
             <canvas id="priceChart"></canvas>
         </div>
 
-        <h2>Latest Prices ({{ log_data[-1].datetime_utc }} UTC)</h2>
+        <h2>Latest Prices for {{ selected_symbol }} ({{ log_data[-1].datetime_utc }} UTC)</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Symbol</th>
                     <th>GMO Coin (Buy/Sell)</th>
                     <th>bitbank (Buy/Sell)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ log_data[-1].symbol }}</td>
                     <td>{{ log_data[-1].gmo_buy }} / {{ log_data[-1].gmo_sell }}</td>
                     <td>{{ log_data[-1].bitbank_buy }} / {{ log_data[-1].bitbank_sell }}</td>
                 </tr>
