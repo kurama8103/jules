@@ -15,3 +15,5 @@ config.py
 .idea/
 *.swp
 *.swo
+
+*.csv
