@@ -3,7 +3,8 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-LOG_FILE_PATH = 'price_log.csv'
+PRICE_LOG_FILE_PATH = 'price_log.csv'
+OPP_LOG_FILE_PATH = 'opportunities_log.csv'
 
 @app.route('/')
 def index():
@@ -14,28 +15,38 @@ def index():
     """
     selected_symbol = request.args.get('symbol', '')
 
+    # --- 価格ログの読み込み ---
     try:
-        df = pd.read_csv(LOG_FILE_PATH)
-        all_symbols = sorted(df['symbol'].unique())
+        df_price = pd.read_csv(PRICE_LOG_FILE_PATH)
+        all_symbols = sorted(df_price['symbol'].unique())
 
-        # シンボルが選択されていなければ、最初のシンボルを選択
         if not selected_symbol and all_symbols:
             selected_symbol = all_symbols[0]
 
-        # 選択されたシンボルでデータをフィルタリング
         if selected_symbol:
-            df_filtered = df[df['symbol'] == selected_symbol].copy()
+            df_filtered = df_price[df_price['symbol'] == selected_symbol].copy()
         else:
-            df_filtered = pd.DataFrame() # データがない場合は空のDataFrame
+            df_filtered = pd.DataFrame()
 
-        data = df_filtered.to_dict(orient='records')
+        price_data = df_filtered.to_dict(orient='records')
 
     except (FileNotFoundError, KeyError):
         df_filtered = pd.DataFrame()
         all_symbols = []
-        data = []
+        price_data = []
 
-    # グラフ用のデータを準備する
+    # --- 裁定機会ログの読み込み ---
+    try:
+        df_opp = pd.read_csv(OPP_LOG_FILE_PATH)
+        if selected_symbol:
+            opp_data = df_opp[df_opp['symbol'] == selected_symbol].to_dict(orient='records')
+        else:
+            opp_data = df_opp.to_dict(orient='records')
+    except (FileNotFoundError, KeyError):
+        opp_data = []
+
+
+    # --- グラフ用のデータ準備 ---
     chart_data = None
     if not df_filtered.empty:
         df_filtered['datetime_utc'] = pd.to_datetime(df_filtered['datetime_utc'])
@@ -49,7 +60,8 @@ def index():
 
     return render_template(
         'index.html',
-        log_data=data,
+        price_log_data=price_data,
+        opp_log_data=opp_data,
         chart_data=chart_data,
         all_symbols=all_symbols,
         selected_symbol=selected_symbol

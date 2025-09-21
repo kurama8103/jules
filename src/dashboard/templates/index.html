@@ -25,13 +25,13 @@
         </select>
     </form>
 
-    {% if log_data %}
+    {% if price_log_data %}
         <h2>Price Chart for {{ selected_symbol }} (Sell Prices)</h2>
         <div class="chart-container">
             <canvas id="priceChart"></canvas>
         </div>
 
-        <h2>Latest Prices for {{ selected_symbol }} ({{ log_data[-1].datetime_utc }} UTC)</h2>
+        <h2>Latest Prices for {{ selected_symbol }} ({{ price_log_data[-1].datetime_utc }} UTC)</h2>
         <table>
             <thead>
                 <tr>
@@ -41,13 +41,49 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ log_data[-1].gmo_buy }} / {{ log_data[-1].gmo_sell }}</td>
-                    <td>{{ log_data[-1].bitbank_buy }} / {{ log_data[-1].bitbank_sell }}</td>
+                    <td>{{ price_log_data[-1].gmo_buy }} / {{ price_log_data[-1].gmo_sell }}</td>
+                    <td>{{ price_log_data[-1].bitbank_buy }} / {{ price_log_data[-1].bitbank_sell }}</td>
                 </tr>
             </tbody>
         </table>
 
-        <h2>Price Log History</h2>
+        <h2>Arbitrage Opportunities Found</h2>
+        {% if opp_log_data %}
+            <table border="1" style="width:100%; border-collapse: collapse; margin-top: 1em;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Buy Exchange</th>
+                        <th>Sell Exchange</th>
+                        <th>Buy Price</th>
+                        <th>Sell Price</th>
+                        <th>Gross Profit</th>
+                        <th>Cost</th>
+                        <th>Net Profit</th>
+                        <th>Net Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in opp_log_data | reverse %}
+                    <tr>
+                        <td>{{ row.datetime_utc }}</td>
+                        <td>{{ row.buy_exchange }}</td>
+                        <td>{{ row.sell_exchange }}</td>
+                        <td>{{ "%.2f"|format(row.buy_price) }}</td>
+                        <td>{{ "%.2f"|format(row.sell_price) }}</td>
+                        <td>{{ "%.2f"|format(row.gross_profit) }}</td>
+                        <td>{{ "%.2f"|format(row.total_cost) }}</td>
+                        <td><b>{{ "%.2f"|format(row.net_profit) }}</b></td>
+                        <td>{{ "%.4f"|format(row.profit_rate * 100) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No arbitrage opportunities logged yet for this symbol.</p>
+        {% endif %}
+
+        <h2 style="margin-top: 2em;">Price Log History</h2>
         <table border="1" style="width:100%; border-collapse: collapse;">
             <thead>
                 <tr>
@@ -60,7 +96,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in log_data | reverse %}
+                {% for row in price_log_data | reverse %}
                 <tr>
                     <td>{{ row.datetime_utc }}</td>
                     <td>{{ row.symbol }}</td>
@@ -74,7 +110,7 @@
         </table>
     {% else %}
         <h2>No Data Found</h2>
-        <p>No data found in <code>price_log.csv</code>. Please run the main bot (`main.py`) to collect data.</p>
+        <p>No data found. Please run the main bot (`main.py`) to collect data.</p>
     {% endif %}
 
     <script>
