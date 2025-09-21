@@ -10,6 +10,9 @@ venv/
 # Config files
 config.py
 
+# Log files
+*.csv
+
 # IDE / Editor specific
 .vscode/
 .idea/
