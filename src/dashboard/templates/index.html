@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbitrage Bot Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        h1, h2 { color: #333; }
+        .chart-container { position: relative; height: 40vh; width: 80vw; margin-top: 2em; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Arbitrage Bot Dashboard</h1>
+
+    {% if log_data %}
+        <h2>Price Chart (Sell Prices)</h2>
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+
+        <h2>Latest Prices ({{ log_data[-1].datetime_utc }} UTC)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>GMO Coin (Buy/Sell)</th>
+                    <th>bitbank (Buy/Sell)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ log_data[-1].symbol }}</td>
+                    <td>{{ log_data[-1].gmo_buy }} / {{ log_data[-1].gmo_sell }}</td>
+                    <td>{{ log_data[-1].bitbank_buy }} / {{ log_data[-1].bitbank_sell }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Price Log History</h2>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Symbol</th>
+                    <th>GMO Buy</th>
+                    <th>GMO Sell</th>
+                    <th>Bitbank Buy</th>
+                    <th>Bitbank Sell</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in log_data | reverse %}
+                <tr>
+                    <td>{{ row.datetime_utc }}</td>
+                    <td>{{ row.symbol }}</td>
+                    <td>{{ row.gmo_buy }}</td>
+                    <td>{{ row.gmo_sell }}</td>
+                    <td>{{ row.bitbank_buy }}</td>
+                    <td>{{ row.bitbank_sell }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h2>No Data Found</h2>
+        <p>No data found in <code>price_log.csv</code>. Please run the main bot (`main.py`) to collect data.</p>
+    {% endif %}
+
+    <script>
+    {% if chart_data %}
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_data.labels | tojson }},
+            datasets: [{
+                label: 'GMO Coin Sell Price',
+                data: {{ chart_data.gmo_sell_prices | tojson }},
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                fill: false
+            }, {
+                label: 'bitbank Sell Price',
+                data: {{ chart_data.bitbank_sell_prices | tojson }},
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+    {% endif %}
+    </script>
+</body>
+</html>
